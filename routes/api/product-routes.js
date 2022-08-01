@@ -4,19 +4,46 @@ const { Product, Category, Tag, ProductTag } = require('../../models');
 // The `/api/products` endpoint
 
 // get all products
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   // find all products
-  // be sure to include its associated Category and Tag data
+  try {
+    const products = await Product.findAll({
+      // be sure to include its associated Category and Tag data
+      include: [Category, Tag]
+    })
+    res.status(200).json(products)
+  } catch (err) {
+    res.status(500).json({
+      msg: "internal server error",
+      err
+    })
+  }
 });
 
 // get one product
 router.get('/:id', (req, res) => {
   // find a single product by its `id`
-  // be sure to include its associated Category and Tag data
+  Product.findByPk(req.params.id), {
+    // be sure to include its associated Category and Tag data
+    include: [Category, Tag]
+  }.then(productId => {
+    if (!productId) {
+      return res.status(404).json({
+        msg: "this product id does not exist"
+      })
+    }
+    res.json(productId)
+  }).catch(err => {
+    res.status(500).json({
+      msg: "internal server error",
+      err
+    })
+  })
 });
 
+
 // create new product
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   /* req.body should look like this...
     {
       product_name: "Basketball",
@@ -91,6 +118,21 @@ router.put('/:id', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   // delete one product by its `id` value
+  Product.delete({
+    where: {
+      id: req.params.id
+    }
+  }).then(productDel => {
+    if (!productDel) {
+      return res.status(404).json({ msg: "no such product" })
+    }
+    res.json(productDel)
+  }).catch(err => {
+    res.status(500).json({
+      msg: "internal server error",
+      err
+    })
+  })
 });
 
 module.exports = router;

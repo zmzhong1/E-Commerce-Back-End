@@ -10,40 +10,45 @@ router.get('/', async (req, res) => {
     include: [{
       model: Product
     }]
-  }).then(data => {
-    res.json(data)
+  }).then(categoryData => {
+    if (!categoryData) {
+      return res.status(404).json({
+        msg: "this category id does not exist"
+      })
+    }
+    res.json(categoryData)
   }).catch(err => {
     res.status(500).json({ msg: "error finding categories", err })
   })
 });
 
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   // find one category by its `id` value
-  Category.findByPk(req.params.id), {
-    // be sure to include its associated Products
-    include: [{
-      model: Product
-    }]
-  }.then(categoryId => {
+  try {
+    const categoryId = await Category.findByPk(req.params.id, {
+      // be sure to include its associated Products
+      include: {
+        model: Product
+      }
+    })
     if (!categoryId) {
       return res.status(404).json({
         msg: "this category id does not exist"
       })
     }
     res.json(categoryId)
-  }).catch(err => {
+  } catch (err) {
     res.status(500).json({
       msg: "internal server error",
       err
     })
-  })
+  }
 });
 
 // create a new category
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const newCategory = await Category.create({
-      id: req.body.id,
       category_name: req.body.category_name
     })
     res.status(201).json(newCategory)
@@ -81,7 +86,7 @@ router.put('/:id', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   // delete a category by its `id` value
-  Category.delete({
+  Category.destroy({
     where: {
       id: req.params.id
     }

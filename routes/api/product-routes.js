@@ -21,24 +21,25 @@ router.get('/', async (req, res) => {
 });
 
 // get one product
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   // find a single product by its `id`
-  Product.findByPk(req.params.id), {
-    // be sure to include its associated Category and Tag data
-    include: [Category, Tag]
-  }.then(productId => {
+  try {
+    const productId = await Product.findByPk(req.params.id, {
+      // be sure to include its associated Products
+      include: [Category, Tag]
+    })
     if (!productId) {
       return res.status(404).json({
         msg: "this product id does not exist"
       })
     }
     res.json(productId)
-  }).catch(err => {
+  } catch (err) {
     res.status(500).json({
       msg: "internal server error",
       err
     })
-  })
+  }
 });
 
 
@@ -118,7 +119,7 @@ router.put('/:id', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   // delete one product by its `id` value
-  Product.delete({
+  Product.destroy({
     where: {
       id: req.params.id
     }
